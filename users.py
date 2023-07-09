@@ -1,4 +1,5 @@
 import typer
+import rich
 import requests
 from fillpdf import fillpdfs
 import json
@@ -99,51 +100,53 @@ def create_azure_user(token: str, givenName: str, familyName:str, password: str,
 # Fill out welcome pdf
 def fill_welcome_pdf(givenName: str, familyName:str, password: str, gdomain: str, msdomain: str):
     d = {'guser': f"{givenName.lower()}.{familyName.lower()}@{gdomain}", 'gpass': f"{password}", 'msuser': f"{givenName.lower()}.{familyName.lower()}@{msdomain}", 'mspass': f"{password}"}
-    fillpdfs.write_fillable_pdf("assets/welcome.pdf", f"filled/{givenName}_{familyName}_welcome.pdf", d, flatten = True)
+    fillpdfs.write_fillable_pdf(input_pdf_path = "assets/welcome.pdf", output_pdf_path = f"{givenName}_{familyName}_welcome.pdf", data_dict= d, flatten = True)
 
 
 
-app = typer.Typer()
+app = typer.Typer(help="Awesome CLI user manager.")
 
 # Argument to create a user
-@app.command()
-def add(givenName: str, familyName:str, password: str = None, gdomain: str = "integriculture.com", msdomain: str = "integriculture.com"):
+@app.command(help = "Create a user")
+def add(givenname: str, familyname:str, password: str = None, gdomain: str = "integriculture.com", msdomain: str = "integriculture.net"):
     # If password is None, create random password
     if password == None:
         password = secrets.token_urlsafe(13)
 
     # Create user on google workspace
-    typer.echo(f"☑️ Creating user on Google Workspace")
+    rich.print(f"☑️ Creating user on Google Workspace")
     try:
-        guser = create_google_user(givenName, familyName, password, gdomain)
+        guser = create_google_user(givenname, familyname, password, gdomain)
     except Exception as e:
-        typer.echo(f"❌ Failed to create user on Google Workspace")
-        typer.echo(e)
+        rich.print(f"❌ Failed to create user on Google Workspace")
+        rich.print(e)
         raise typer.Exit(code=1)
 
     # Check return
     if guser:
-        typer.echo(f"✅ User {guser['username']} created on Google Workspace")
+        rich.print(f"✅ User {guser['primaryEmail']} created on Google Workspace")
 
     # Get Graph API token
     token = get_graph_token()
 
     # Create user on AzureAD
-    typer.echo(f"☑️ Creating user on AzureAD")
-    msuser = create_azure_user(token, givenName, familyName, password, msdomain)
+    rich.print(f"☑️ Creating user on AzureAD")
+    msuser = create_azure_user(token, givenname, familyname, password, msdomain)
 
     # Check return
-    if msuser["status_code"] == 201:
-        typer.echo(f"✅ User created on AzureAD")
+    if msuser.status_code == 201:
+        rich.print(f"✅ User created on AzureAD")
     else:
-        typer.echo(f"❌ Failed to create user on AzureAD. Error: {msuser['status_code']} {msuser['message']}")
+        rich.print(f"❌ Failed to create user on AzureAD. Error: {msuser['status_code']} {msuser['message']}")
         raise typer.Exit(code=1)
     
     # Fill out welcome pdf
-    typer.echo(f"☑️ Filling out welcome pdf")
-    fill_welcome_pdf(givenName, familyName, password, gdomain, msdomain)
-    typer.echo(f"✅ Welcome pdf filled out")
+    rich.print(f"☑️ Filling out welcome pdf")
+    fill_welcome_pdf(givenname, familyname, password, gdomain, msdomain)
+    rich.print(f"✅ Welcome pdf filled out")
 
-    typer.echo("All done!", color=typer.colors.GREEN)
+    rich.print("All done!", color=typer.colors.GREEN)
 
 
+if __name__ == "__main__":
+    app()

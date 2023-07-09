@@ -13,3 +13,6 @@ class TestUsers(unittest.TestCase):
         res = users.create_azure_user(token, "Test", "User", "DKVQUsVD_48qAaA1vw", "integriculture.net")
         if res != 201:
             unittest.fail("Failed to create user on AzureAD")
+
+    def test_fill_welcome_pdf(self):
+        users.fill_welcome_pdf("Test", "User", "DKVQUsVD_48qAaA1vw", "integriculture.com", "integriculture.net")
