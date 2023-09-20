@@ -109,6 +109,9 @@ app = typer.Typer(help="Awesome CLI user manager.")
 # Argument to create a user
 @app.command(help = "Create a user")
 def add(givenname: str, familyname:str, password: str = None, gdomain: str = "integriculture.com", msdomain: str = "integriculture.net"):
+    # Capitalize names
+    givenname = givenname.capitalize()
+    familyname = familyname.capitalize()
     # If password is None, create random password
     if password == None:
         password = secrets.token_urlsafe(13)
@@ -145,7 +148,7 @@ def add(givenname: str, familyname:str, password: str = None, gdomain: str = "in
     fill_welcome_pdf(givenname, familyname, password, gdomain, msdomain)
     rich.print(f"✅ Welcome pdf filled out")
 
-    rich.print("All done!", color=typer.colors.GREEN)
+    rich.print("All done!")
 
 
 if __name__ == "__main__":
