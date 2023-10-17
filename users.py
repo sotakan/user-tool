@@ -1,5 +1,6 @@
 import typer
 import rich
+from rich.pretty import pprint
 import requests
 from fillpdf import fillpdfs
 import json
@@ -76,6 +77,36 @@ def create_google_user(givenName: str, familyName:str, password: str, domain: st
 
     return results
 
+# Get Google Directory Groups
+def get_google_groups():
+    # Start Google OAuth flow
+    SCOPES = ['https://www.googleapis.com/auth/admin.directory.group']
+    # Check if we have a token already
+    creds = None
+
+    if os.path.exists('creds/token.json'):
+        creds = Credentials.from_authorized_user_file('creds/token.json', SCOPES)
+
+    # If there are no (valid) credentials available, let the user log in.
+    if not creds or not creds.valid:
+        if creds and creds.expired and creds.refresh_token:
+            creds.refresh(Request())
+        else:
+            flow = InstalledAppFlow.from_client_secrets_file(
+                'creds/appcreds.json', SCOPES)
+            creds = flow.run_local_server(port=0)
+        # Save the credentials for the next run
+        with open('creds/token.json', 'w') as token:
+            token.write(creds.to_json())
+
+    # Create service object for calling the Admin SDK Directory API
+    service = build("admin", "directory_v1", credentials=creds)
+
+    # Call the Admin SDK Directory API
+    results = service.groups().list(domain="integriculture.com").execute()
+
+    return results["groups"]
+
 # Create a user on AzureAD
 def create_azure_user(token: str, givenName: str, familyName:str, password: str, domain: str):
     api_endpoint = "https://graph.microsoft.com/v1.0/users"
@@ -149,6 +180,13 @@ def add(givenname: str, familyname:str, password: str = None, gdomain: str = "in
     rich.print(f"✅ Welcome pdf filled out")
 
     rich.print("All done!")
+
+# List groups
+@app.command(help = "List groups")
+def listgroups():
+    groups = get_google_groups()
+    for group in groups:
+        pprint({"Name": group["name"], "Email": group["email"]}, expand_all=True)
 
 
 if __name__ == "__main__":
