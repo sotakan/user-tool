@@ -6,6 +6,7 @@ from fillpdf import fillpdfs
 import json
 import secrets
 import os
+import time
 
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
@@ -144,6 +145,23 @@ def reset_azure_password(token: str, username: str, password: str):
     # POST request to reset password
     response = requests.post(api_endpoint, headers=headers, json=d)
     return response
+
+# Verify AzureAD password changed
+def verify_azure_password_change(token: str, uri: str) -> bool:
+    try_count = 0
+    headers = {"Authorization": f"Bearer {token}"}
+
+    while True:
+        # GET request to verify password change
+        response = json.loads(requests.get(uri, headers=headers).text)
+
+        if response.status == "succeeded":
+            return True
+        elif response.status == "failed" or try_count > 10:
+            return False
+        else:
+            try_count += 1
+            time.sleep(10)
 
 # Fill out welcome pdf
 def fill_welcome_pdf(givenName: str, familyName:str, password: str, gdomain: str, msdomain: str, ggroup: list):
