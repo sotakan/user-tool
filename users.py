@@ -131,6 +131,20 @@ def create_azure_user(token: str, givenName: str, familyName:str, password: str,
     response = requests.post(api_endpoint, headers=headers, json=d)
     return response
 
+# Reset AzureAD password
+def reset_azure_password(token: str, username: str, password: str):
+    api_endpoint = f"https://graph.microsoft.com/v1.0/users/{username}/authentication/methods/28c10230-6103-485e-b985-444c60001490/resetPassword"
+    headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
+
+    #  Request body
+    d = {
+        "newPassword": password
+    }
+
+    # POST request to reset password
+    response = requests.post(api_endpoint, headers=headers, json=d)
+    return response
+
 # Fill out welcome pdf
 def fill_welcome_pdf(givenName: str, familyName:str, password: str, gdomain: str, msdomain: str, ggroup: list):
     group_str = ggroup[0][1]
