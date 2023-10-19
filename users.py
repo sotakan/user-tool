@@ -6,6 +6,7 @@ from fillpdf import fillpdfs
 import json
 import secrets
 import os
+import re
 
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
@@ -130,6 +131,27 @@ def create_azure_user(token: str, givenName: str, familyName:str, password: str,
     # POST request to create user
     response = requests.post(api_endpoint, headers=headers, json=d)
     return response
+
+# Check O365 license count
+def check_o365_license_count(token: str) -> list:
+    api_endpoint = "https://graph.microsoft.com/v1.0/subscribedSkus"
+    headers = {"Authorization": f"Bearer {token}"}
+
+    # GET request to get license count
+    response = requests.get(api_endpoint, headers=headers)
+
+    if response.status_code != 200:
+        raise Exception(f"Could not get license count. Error: {response.status_code} {response.text}")
+    
+    # Parse response
+    tally = [0, 0]
+    for sku in json.loads(response.text)["value"]:
+        if re.match("O365*", sku["skuPartNumber"]):
+            tally[0] = sku["prepaidUnits"]["enabled"] - sku["consumedUnits"] + tally[0]
+        elif sku["skuPartNumber"] == "EMS":
+            tally[1] = sku["prepaidUnits"]["enabled"] - sku["consumedUnits"] + tally[1]
+
+    return tally
 
 # Fill out welcome pdf
 def fill_welcome_pdf(givenName: str, familyName:str, password: str, gdomain: str, msdomain: str, ggroup: list):
