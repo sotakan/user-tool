@@ -21,3 +21,6 @@ class TestUsers(unittest.TestCase):
     def test_get_google_groups(self):
         res = users.get_google_groups()
         self.assertEqual(type(res), list)
+
+    def test_add_to_google_group(self):
+        res = users.add_to_google_group("noreply@integriculture.com", "john.doe@integriculture.com")
