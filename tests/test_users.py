@@ -16,7 +16,7 @@ class TestUsers(unittest.TestCase):
             unittest.fail("Failed to create user on AzureAD")
 
     def test_fill_welcome_pdf(self):
-        users.fill_welcome_pdf("Test", "User", "DKVQUsVD_48qAaA1vw", "integriculture.com", "integriculture.net")
+        users.fill_welcome_pdf("Test", "User", "DKVQUsVD_48qAaA1vw", "integriculture.com", "integriculture.net", [["","test group"]])
 
     def test_get_google_groups(self):
         res = users.get_google_groups()

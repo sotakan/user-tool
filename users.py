@@ -138,7 +138,7 @@ def fill_welcome_pdf(givenName: str, familyName:str, password: str, gdomain: str
         for g in ggroup:
             group_str = f"{group_str}, {g[1]}"
 
-    d = {'personName': f'{givenName} {familyName}','guser': f"{givenName.lower()}.{familyName.lower()}@{gdomain}", 'gpass': f"{password}", 'msuser': f"{givenName.lower()}.{familyName.lower()}@{msdomain}", 'mspass': f"{password}", 'ggroup': f"{group_str}"}
+    d = {'uname': f"{givenName} {familyName}",'guser': f"{givenName.lower()}.{familyName.lower()}@{gdomain}", 'gpass': f"{password}", 'msuser': f"{givenName.lower()}.{familyName.lower()}@{msdomain}", 'mspass': f"{password}", 'ggroup': f"{group_str}"}
     fillpdfs.write_fillable_pdf(input_pdf_path = "assets/welcome_v2.pdf", output_pdf_path = f"{givenName}_{familyName}_welcome.pdf", data_dict= d, flatten = True)
 
 
