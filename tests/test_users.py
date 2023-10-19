@@ -1,4 +1,5 @@
 import unittest
+
 import users
 
 class TestUsers(unittest.TestCase):
@@ -16,3 +17,10 @@ class TestUsers(unittest.TestCase):
 
     def test_fill_welcome_pdf(self):
         users.fill_welcome_pdf("Test", "User", "DKVQUsVD_48qAaA1vw", "integriculture.com", "integriculture.net")
+
+    def test_get_google_groups(self):
+        res = users.get_google_groups()
+        self.assertEqual(type(res), list)
+
+    def test_add_to_google_group(self):
+        res = users.add_to_google_group("noreply@integriculture.com", "john.doe@integriculture.com")
