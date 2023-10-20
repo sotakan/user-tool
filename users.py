@@ -1,5 +1,6 @@
 import typer
 import rich
+from rich.console import Console
 from rich.pretty import pprint
 import requests
 from fillpdf import fillpdfs
@@ -179,7 +180,7 @@ def add(password: str = None, gdomain: str = "integriculture.com", msdomain: str
     if password == None:
         password = secrets.token_urlsafe(13)
     # Confirm username
-    rich.print(f"Username will be {givenname.lower()}.{familyname.lower()}@{gdomain} for {givenname} {familyname}")
+    console.print(f"Username will be {givenname.lower()}.{familyname.lower()}@{gdomain} for {givenname} {familyname}")
     usercorrect = typer.confirm("Is this correct?", default=True)
     if not usercorrect:
         raise typer.Exit(code=1)
@@ -187,7 +188,7 @@ def add(password: str = None, gdomain: str = "integriculture.com", msdomain: str
     # Get Google Workspaces groups list and print
     groups = get_google_groups()
     for i in range(len(groups)):
-        rich.print(f"[{i}] {groups[i]['name']} ({groups[i]['email']})")
+        console.print(f"[{i}] {groups[i]['name']} ({groups[i]['email']})")
     # Prompt for group
     addgroup = typer.prompt("Which group should the user be added to? (Separate multiple groups with comma)")
     # Split groups
@@ -197,51 +198,84 @@ def add(password: str = None, gdomain: str = "integriculture.com", msdomain: str
         addgroup.append([groups[int(g)]["email"], groups[int(g)]["name"]])
 
     # Create user on google workspace
-    rich.print(f"☑️ Creating user on Google Workspace")
+    console.print(f"☑️ Creating user on Google Workspace")
     try:
         guser = create_google_user(givenname, familyname, password, gdomain)
     except Exception as e:
-        rich.print(f"❌ Failed to create user on Google Workspace")
-        rich.print(e)
+        console.print(f"❌ Failed to create user on Google Workspace")
+        console.print(e)
         raise typer.Exit(code=1)
 
     # Check return
     if guser:
-        rich.print(f"✅ User {guser['primaryEmail']} created on Google Workspace")
+        console.print(f"✅ User {guser['primaryEmail']} created on Google Workspace")
 
     # Add user to groups
     for group in addgroup:
-        rich.print(f"☑️ Adding user to group {group[1]}")
+        console.print(f"☑️ Adding user to group {group[1]}")
         try:
             add_to_google_group(group[0], guser["primaryEmail"])
         except Exception as e:
-            rich.print(f"❌ Failed to add user to group {group[1]}")
-            rich.print(e)
+            console.print(f"❌ Failed to add user to group {group[1]}")
+            console.print(e)
             raise typer.Exit(code=1)
-        rich.print(f"✅ User added to group {group[1]}")
+        console.print(f"✅ User added to group {group[1]}")
+
+    console.rule("Google Workspace done!")
 
     # Get Graph API token
     token = get_graph_token()
 
+    # Check O365 license count
+    while True:
+        console.print(f"☑️ Checking MSFT license count")
+        try:
+            tally = check_o365_license_count(token)
+        except Exception as e:
+            console.print(f"❌ Failed to check O365 license count")
+            console.print(e)
+            raise typer.Exit(code=1)
+        
+        no_license = False
+        if tally[0] < 1:
+            console.print(f"❌ {tally[0]} O365 licenses available")
+            no_license = True
+        elif tally[1] < 1:
+            console.print(f"❌ {tally[1]} EMS licenses available")
+            no_license = True
+        
+        if no_license:
+            console.print(f"Goto https://admin.microsoft.com/#/subscriptions to add more licenses")
+            check = typer.prompt("[R]echeck license count or [I]gnore?", default="R").lower()
+
+            if check == "r":
+                continue
+            elif check == "i":
+                console.print(f"☑️ Ignoring license deficiency")
+                break
+        else:
+            console.print(f"✅ MSFT licenses available")
+            break
+
     # Create user on AzureAD
-    rich.print(f"☑️ Creating user on AzureAD")
+    console.print(f"☑️ Creating user on AzureAD")
     msuser = create_azure_user(token, givenname, familyname, password, msdomain)
 
     # Check return
     if msuser.status_code == 201:
-        rich.print(f"✅ User created on AzureAD")
+        console.print(f"✅ User created on AzureAD")
     elif msuser.status_code == 400 and json.loads(msuser.text)["error"]["message"] == "Another object with the same value for property userPrincipalName already exists.":
-        rich.print(f"❌ User already exists on AzureAD")
+        console.print(f"❌ User already exists on AzureAD")
     else:
-        rich.print(f"❌ Failed to create user on AzureAD. Error: {msuser.status_code} {msuser['message']}")
+        console.print(f"❌ Failed to create user on AzureAD. Error: {msuser.status_code} {msuser['message']}")
         raise typer.Exit(code=1)
     
     # Fill out welcome pdf
-    rich.print(f"☑️ Filling out welcome pdf")
+    console.print(f"☑️ Filling out welcome pdf")
     fill_welcome_pdf(givenname, familyname, password, gdomain, msdomain, addgroup)
-    rich.print(f"✅ Welcome pdf filled out")
+    console.print(f"✅ Welcome pdf filled out")
 
-    rich.print("All done!")
+    console.rule("All done!")
 
 # List groups
 @app.command(help = "List groups")
@@ -252,4 +286,5 @@ def listgroups():
 
 
 if __name__ == "__main__":
+    console = Console()
     app()
