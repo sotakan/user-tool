@@ -156,10 +156,13 @@ def check_o365_license_count(token: str) -> list:
 
 # Fill out welcome pdf
 def fill_welcome_pdf(givenName: str, familyName:str, password: str, gdomain: str, msdomain: str, ggroup: list):
-    group_str = ggroup[0][1]
-    if len(ggroup) > 1:
-        for g in ggroup:
-            group_str = f"{group_str}, {g[1]}"
+    if len(ggroup) != 0:
+        group_str = ggroup[0][1]
+        if len(ggroup) > 1:
+            for g in ggroup:
+                group_str = f"{group_str}, {g[1]}"
+    else:
+        group_str = ""
 
     d = {'uname': f"{givenName} {familyName}",'guser': f"{givenName.lower()}.{familyName.lower()}@{gdomain}", 'gpass': f"{password}", 'msuser': f"{givenName.lower()}.{familyName.lower()}@{msdomain}", 'mspass': f"{password}", 'ggroup': f"{group_str}"}
     fillpdfs.write_fillable_pdf(input_pdf_path = "assets/welcome_v2.pdf", output_pdf_path = f"{givenName}_{familyName}_welcome.pdf", data_dict= d, flatten = True)
@@ -194,8 +197,9 @@ def add(password: str = None, gdomain: str = "integriculture.com", msdomain: str
     # Split groups
     grouplist = addgroup.split(",")
     addgroup = []
-    for g in grouplist:
-        addgroup.append([groups[int(g)]["email"], groups[int(g)]["name"]])
+    if grouplist[0] != "":
+        for g in grouplist:
+            addgroup.append([groups[int(g)]["email"], groups[int(g)]["name"]])
 
     # Create user on google workspace
     console.print(f"☑️ Creating user on Google Workspace")
@@ -269,6 +273,8 @@ def add(password: str = None, gdomain: str = "integriculture.com", msdomain: str
     else:
         console.print(f"❌ Failed to create user on AzureAD. Error: {msuser.status_code} {msuser['message']}")
         raise typer.Exit(code=1)
+    
+    console.rule("AzureAD done!")
     
     # Fill out welcome pdf
     console.print(f"☑️ Filling out welcome pdf")
