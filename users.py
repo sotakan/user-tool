@@ -190,7 +190,7 @@ def add(password: str = None, gdomain: str = "integriculture.com", msdomain: str
     for i in range(len(groups)):
         console.print(f"[{i}] {groups[i]['name']} ({groups[i]['email']})")
     # Prompt for group
-    addgroup = typer.prompt("Which group should the user be added to? (Separate multiple groups with comma)")
+    addgroup = typer.prompt("Which group should the user be added to? (Separate multiple groups with comma)", default = "")
     # Split groups
     grouplist = addgroup.split(",")
     addgroup = []
