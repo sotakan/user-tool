@@ -24,3 +24,8 @@ class TestUsers(unittest.TestCase):
 
     def test_add_to_google_group(self):
         res = users.add_to_google_group("noreply@integriculture.com", "john.doe@integriculture.com")
+
+    def test_check_o365_license_count(self):
+        token = users.get_graph_token()
+        res = users.check_o365_license_count(token)
+        self.assertEqual(type(res), list)
